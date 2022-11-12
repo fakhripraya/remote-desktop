@@ -5,7 +5,9 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron .",
+    "rebuild-robojs": "electron-rebuild -f -w robojs",
+    "postinstall": "electron-builder install-app-deps"
   },
   "author": "",
   "license": "ISC",

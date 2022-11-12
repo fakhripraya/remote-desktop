@@ -1,6 +1,11 @@
 var app = require('express')();
+const cors = require('cors');
 var http = require('http').createServer(app);
-var io = require('socket.io')(http);
+var io = require('socket.io')(http, {
+    cors: {
+        origin: '*',
+    }
+});
 
 app.use(cors());
 
@@ -45,6 +50,7 @@ io.on('connection', (socket) => {
 
     // Trigger when the socket connection got disconnected
     socket.on('disconnect', function (reason) {
+        console.log(reason);
         if (reason === "ping timeout") { }
     });
 })

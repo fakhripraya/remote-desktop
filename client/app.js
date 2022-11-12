@@ -3,12 +3,12 @@ const { v4: uuidv4 } = require('uuid');
 const screenshot = require('screenshot-desktop');
 var robot = require("robotjs");
 
-var socket = require('socket.io-client')('http://192.168.0.101:5000');
+var socket = require('socket.io-client')('http://192.168.18.16:5000');
 var interval;
 
-function createWindow () {
+function createWindow() {
     const win = new BrowserWindow({
-        width: 500,
+        width: 1000,
         height: 150,
         webPreferences: {
             nodeIntegration: true
@@ -17,7 +17,7 @@ function createWindow () {
     win.removeMenu();
     win.loadFile('index.html')
 
-    socket.on("mouse-move", function(data){
+    socket.on("mouse-move-recieve", function (data) {
         var obj = JSON.parse(data);
         var x = obj.x;
         var y = obj.y;
@@ -25,11 +25,11 @@ function createWindow () {
         robot.moveMouse(x, y);
     })
 
-    socket.on("mouse-click", function(data){
+    socket.on("mouse-click-recieve", function (data) {
         robot.mouseClick();
     })
 
-    socket.on("type", function(data){
+    socket.on("keyboard-type-recieve", function (data) {
         var obj = JSON.parse(data);
         var key = obj.key;
 
@@ -51,26 +51,25 @@ app.on('activate', () => {
     }
 })
 
-ipcMain.on("start-share", function(event, arg) {
+ipcMain.on("start-share", function (event, arg) {
 
     var uuid = "test";//uuidv4();
-    socket.emit("join-message", uuid);
+    socket.emit("join-room", uuid, () => { });
     event.reply("uuid", uuid);
 
-    interval = setInterval(function() {
+    interval = setInterval(function () {
         screenshot().then((img) => {
-            var imgStr = new Buffer(img).toString('base64');
+            var imgStr = new Buffer.from(img).toString('base64');
 
             var obj = {};
             obj.room = uuid;
             obj.image = imgStr;
-
             socket.emit("screen-data", JSON.stringify(obj));
         })
     }, 500)
 })
 
-ipcMain.on("stop-share", function(event, arg) {
+ipcMain.on("stop-share", function (event, arg) {
 
     clearInterval(interval);
 })
