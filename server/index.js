@@ -2,41 +2,54 @@ var app = require('express')();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 
+app.use(cors());
+
 app.get('/view', (req, res) => {
     res.sendFile(__dirname + '/display.html');
-})
+});
 
-io.on('connection', (socket)=> {
+io.on('connection', (socket) => {
 
-    socket.on("join-message", (roomId) => {
+    // Triggered when user trying to join a room
+    socket.on('join-room', (roomId, callback) => {
         socket.join(roomId);
-        console.log("User joined in a room : " + roomId);
-    })
+        console.log("User : " + socket.id + "has joined in a room : " + roomId);
 
-    socket.on("screen-data", function(data) {
+        callback();
+    });
+
+    // Triggered repetitively per interval time to update the Remote Desktop video FPS
+    socket.on("screen-data", function (data) {
         data = JSON.parse(data);
         var room = data.room;
         var imgStr = data.image;
-        socket.broadcast.to(room).emit('screen-data', imgStr);
-    })
+        socket.broadcast.to(room).emit('screen-data-recieve', imgStr);
+    });
 
-    socket.on("mouse-move", function(data) {
+    // EVENTS
+    socket.on("mouse-move", function (data) {
         var room = JSON.parse(data).room;
-        socket.broadcast.to(room).emit("mouse-move", data);
-    })
+        socket.broadcast.to(room).emit("mouse-move-recieve", data);
+    });
 
-    socket.on("mouse-click", function(data) {
+    socket.on("mouse-click", function (data) {
         var room = JSON.parse(data).room;
-        socket.broadcast.to(room).emit("mouse-click", data);
-    })
+        socket.broadcast.to(room).emit("mouse-click-recieve", data);
+    });
 
-    socket.on("type", function(data) {
+    socket.on("keyboard-type", function (data) {
         var room = JSON.parse(data).room;
-        socket.broadcast.to(room).emit("type", data);
-    })
+        socket.broadcast.to(room).emit("keyboard-type-recieve", data);
+    });
+    // END OF EVENTS
+
+    // Trigger when the socket connection got disconnected
+    socket.on('disconnect', function (reason) {
+        if (reason === "ping timeout") { }
+    });
 })
 
 var server_port = process.env.YOUR_PORT || process.env.PORT || 5000;
 http.listen(server_port, () => {
-    console.log("Started on : "+ server_port);
+    console.log("Started on : " + server_port);
 })
